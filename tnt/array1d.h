@@ -27,7 +27,7 @@
 #include <cassert>
 #endif
 
-#include "tnt_i_refvec.h"
+#include "tnt/i_refvec.h"
 
 namespace TNT {
 

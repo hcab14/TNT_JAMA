@@ -27,7 +27,7 @@
 #include <cassert>
 #endif
 
-#include "tnt_array1d.h"
+#include "tnt/array1d.h"
 
 namespace TNT {
 

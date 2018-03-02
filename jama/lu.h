@@ -3,7 +3,9 @@
 #ifndef JAMA_LU_H
 #define JAMA_LU_H
 
-#include "tnt.h"
+#include "tnt/array1d.h"
+#include "tnt/array2d.h"
+#include "tnt/math_utils.h"
 #include <algorithm>
 // for min(), max() below
 
