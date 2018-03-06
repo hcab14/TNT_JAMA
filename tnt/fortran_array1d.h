@@ -52,7 +52,7 @@ public:
   Fortran_Array1D();
   explicit Fortran_Array1D(int n);
   Fortran_Array1D(int n, const T &a);
-  Fortran_Array1D(int n, T *a);
+  Fortran_Array1D(int n, const T *a);
   inline Fortran_Array1D(const Fortran_Array1D &A);
   inline Fortran_Array1D &operator=(const T &a);
   inline Fortran_Array1D &operator=(const Fortran_Array1D &A);
@@ -101,7 +101,7 @@ Fortran_Array1D<T>::Fortran_Array1D(int n, const T &val)
 }
 
 template <class T>
-Fortran_Array1D<T>::Fortran_Array1D(int n, T *a)
+Fortran_Array1D<T>::Fortran_Array1D(int n, const T *a)
     : v_(a), n_(n), data_(v_.begin()) {
 #ifdef TNT_DEBUG
   std::cout << "Created Fortran_Array1D(int n, T* a) \n";
@@ -177,7 +177,7 @@ inline Fortran_Array1D<T> Fortran_Array1D<T>::subarray(int i0, int i1) {
 #ifdef TNT_DEBUG
   std::cout << "entered subarray. \n";
 #endif
-  if ((i0 > 0) && (i1 < n_) || (i0 <= i1)) {
+  if (i0 > 0 && i1 < n_ && i0 <= i1) {
     Fortran_Array1D<T> X(*this); /* create a new instance of this array. */
     X.n_ = i1 - i0 + 1;
     X.data_ += i0;

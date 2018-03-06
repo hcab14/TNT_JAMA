@@ -52,6 +52,7 @@ public:
   explicit Array1D(int n);
   Array1D(int n, const T &a);
   Array1D(int n, T *a);
+  Array1D(int n, const T *a);
   inline Array1D(const Array1D &A);
   inline operator T *();
   inline operator const T *();
@@ -62,18 +63,19 @@ public:
   Array1D &inject(const Array1D &A);
   inline T &operator[](int i);
   inline const T &operator[](int i) const;
+  inline T& operator()(int i);
+  inline const T& operator()(int i) const;
   inline int dim1() const;
   inline int dim() const;
+  inline Array1D &operator*=(T);
+  inline Array1D &operator/=(T);
   ~Array1D();
-
-  inline T norm() const;
-  inline T norm2() const;
-  inline T mean() const;
 
   /* ... extended interface ... */
 
   inline int ref_count() const;
   inline Array1D<T> subarray(int i0, int i1);
+  inline const Array1D<T> subarray(int i0, int i1) const;
 };
 
 template <class T> Array1D<T>::Array1D() : v_(), n_(0), data_(0) {}
@@ -110,6 +112,13 @@ Array1D<T>::Array1D(int n, T *a)
   std::cout << "Created Array1D(int n, T* a) \n";
 #endif
 }
+template <class T>
+Array1D<T>::Array1D(int n, const T *a)
+    : v_(a), n_(n), data_(v_.begin()) {
+#ifdef TNT_DEBUG
+  std::cout << "Created Array1D(int n, const T* a) \n";
+#endif
+}
 
 template <class T> inline Array1D<T>::operator T *() { return &(v_[0]); }
 
@@ -130,6 +139,9 @@ template <class T> inline const T &Array1D<T>::operator[](int i) const {
 #endif
   return data_[i];
 }
+
+template<class T> inline T& Array1D<T>::operator()(int i) { return this->operator[](i); }
+template<class T> inline const T& Array1D<T>::operator()(int i) const { return this->operator[](i); }
 
 template <class T> Array1D<T> &Array1D<T>::operator=(const T &a) {
   set_(data_, data_ + n_, a);
@@ -167,24 +179,19 @@ template <class T> inline int Array1D<T>::dim1() const { return n_; }
 
 template <class T> inline int Array1D<T>::dim() const { return n_; }
 
+template <class T> inline Array1D<T>& Array1D<T>::operator*=(T scale) {
+  for (int i=0; i<dim(); ++i)
+    data_[i] *= scale;
+  return *this;
+}
+template <class T> inline Array1D<T>& Array1D<T>::operator/=(T scale) {
+  for (int i=0; i<dim(); ++i)
+    data_[i] /= scale;
+  return *this;
+}
+
 template <class T> Array1D<T>::~Array1D() {}
 
-template <class T> inline T Array1D<T>::norm2() const {
-  T sum(0);
-  for (int i = 0; i < dim(); ++i)
-    sum += data_[i] * data_[i];
-  return sum;
-}
-template <class T> inline T Array1D<T>::norm() const {
-  return std::sqrt(norm2());
-}
-template <class T> inline T Array1D<T>::mean() const {
-  const int n = data_.dim();
-  T sum(0);
-  for (int i = 0; i < n; ++i)
-    sum += data_[i];
-  return n ? sum / T(n) : T(0);
-}
 /* ............................ exented interface ......................*/
 
 template <class T> inline int Array1D<T>::ref_count() const {
@@ -192,14 +199,22 @@ template <class T> inline int Array1D<T>::ref_count() const {
 }
 
 template <class T> inline Array1D<T> Array1D<T>::subarray(int i0, int i1) {
-  if ((i0 >= 0) && (i1 < n_) || (i0 <= i1)) {
-    Array1D<T> X(*this); /* create a new instance of this array. */
-    X.n_ = i1 - i0 + 1;
-    X.data_ += i0;
-
-    return X;
-  }
-  return Array1D<T>();
+#ifdef TNT_BOUNDS_CHECK
+  assert(i0 >= 0 && i1 < n_ && i0 <= i1);
+#endif
+  Array1D<T> X(*this); /* create a new instance of this array. */
+  X.n_ = i1 - i0 + 1;
+  X.data_ += i0;
+  return X;
+}
+template <class T> inline const Array1D<T> Array1D<T>::subarray(int i0, int i1) const {
+#ifdef TNT_BOUNDS_CHECK
+  assert(i0 >= 0 && i1 < n_ && i0 <= i1);
+#endif
+  Array1D<T> X(*this); /* create a new instance of this array. */
+  X.n_ = i1 - i0 + 1;
+  X.data_ += i0;
+  return X;
 }
 
 /* private internal functions */

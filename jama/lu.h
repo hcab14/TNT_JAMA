@@ -3,14 +3,12 @@
 #ifndef JAMA_LU_H
 #define JAMA_LU_H
 
+#include <cmath>
+#include <algorithm>
+
 #include "tnt/array1d.h"
 #include "tnt/array2d.h"
 #include "tnt/math_utils.h"
-#include <algorithm>
-// for min(), max() below
-
-/* using namespace TNT; */
-// using namespace std;
 
 namespace JAMA {
 
@@ -112,7 +110,7 @@ public:
 
       int p = j;
       for (int i = j + 1; i < m; i++) {
-        if (abs(LUcolj[i]) > abs(LUcolj[p])) {
+        if (std::abs(LUcolj[i]) > std::abs(LUcolj[p])) {
           p = i;
         }
       }
@@ -222,10 +220,10 @@ public:
     /* Dimensions: A is mxn, X is nxk, B is mxk */
 
     if (B.dim1() != m) {
-      return TNT::Array2D<Real>(0, 0);
+      return TNT::Array2D<Real>();
     }
     if (!isNonsingular()) {
-      return TNT::Array2D<Real>(0, 0);
+      return TNT::Array2D<Real>();
     }
 
     // Copy right hand side with pivoting

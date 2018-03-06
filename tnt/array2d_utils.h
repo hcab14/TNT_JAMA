@@ -61,12 +61,10 @@ template <class T>
 Array2D<T> operator+(const Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() != m || B.dim2() != n)
-    return Array2D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() == n);
+#endif
   Array2D<T> C(m, n);
-
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++)
       C[i][j] = A[i][j] + B[i][j];
@@ -78,12 +76,10 @@ template <class T>
 Array2D<T> operator-(const Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() != m || B.dim2() != n)
-    return Array2D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() == n);
+#endif
   Array2D<T> C(m, n);
-
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++)
       C[i][j] = A[i][j] - B[i][j];
@@ -96,12 +92,12 @@ Array2D<T> operator-(const Array2D<T> &A, const Array2D<T> &B) {
     Array2D<T> operator*(const Array2D<T> &A, const Array2D<T> &B) {
         int m = A.dim1();
         int n = A.dim2();
-        
+
         if (B.dim1() != m ||  B.dim2() != n )
             return Array2D<T>();
 
         Array2D<T> C(m,n);
-        
+
         for (int i=0; i<m; i++) {
             for (int j=0; j<n; j++)
                 C[i][j] = A[i][j] * B[i][j];
@@ -120,6 +116,10 @@ template <class T> Array2D<T> operator*(const Array2D<T> &A, T scale) {
 }
 template <class T> Array2D<T> operator*(T scale, const Array2D<T> &A) {
   return A * scale;
+}
+template <class T> Array2D<T> operator/(const Array2D<T> &A, T scale) {
+  Array2D<T> B = A.copy();
+  return B * (T(1)/scale);
 }
 
 template <class T> Array2D<T> eye(int n) {
@@ -142,12 +142,10 @@ template <class T>
 Array2D<T> operator/(const Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() != m || B.dim2() != n)
-    return Array2D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() != n);
+#endif
   Array2D<T> C(m, n);
-
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++)
       C[i][j] = A[i][j] / B[i][j];
@@ -158,12 +156,12 @@ Array2D<T> operator/(const Array2D<T> &A, const Array2D<T> &B) {
 template <class T> Array2D<T> &operator+=(Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() == m || B.dim2() == n) {
-    for (int i = 0; i < m; i++) {
-      for (int j = 0; j < n; j++)
-        A[i][j] += B[i][j];
-    }
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() == n);
+#endif
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++)
+      A[i][j] += B[i][j];
   }
   return A;
 }
@@ -171,12 +169,12 @@ template <class T> Array2D<T> &operator+=(Array2D<T> &A, const Array2D<T> &B) {
 template <class T> Array2D<T> &operator-=(Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() == m || B.dim2() == n) {
-    for (int i = 0; i < m; i++) {
-      for (int j = 0; j < n; j++)
-        A[i][j] -= B[i][j];
-    }
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() == n);
+#endif
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++)
+      A[i][j] -= B[i][j];
   }
   return A;
 }
@@ -208,12 +206,12 @@ template <class T> Array2D<T> &operator*=(Array2D<T> &A, T scale) {
 template <class T> Array2D<T> &operator/=(Array2D<T> &A, const Array2D<T> &B) {
   const int m = A.dim1();
   const int n = A.dim2();
-
-  if (B.dim1() == m || B.dim2() == n) {
-    for (int i = 0; i < m; i++) {
-      for (int j = 0; j < n; j++)
-        A[i][j] /= B[i][j];
-    }
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == m && B.dim2() == n);
+#endif
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++)
+      A[i][j] /= B[i][j];
   }
   return A;
 }
@@ -233,15 +231,15 @@ template <class T> Array2D<T> &operator/=(Array2D<T> &A, const Array2D<T> &B) {
 */
 template <class T>
 Array2D<T> matmult(const Array2D<T> &A, const Array2D<T> &B) {
-  if (A.dim2() != B.dim1())
-    return Array2D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(A.dim2() == B.dim1());
+#endif
   const int M = A.dim1();
   const int N = A.dim2();
   const int K = B.dim2();
 
   Array2D<T> C(M, K);
-  for (int i = 0; i < M; i++)
+  for (int i = 0; i < M; i++) {
     for (int j = 0; j < K; j++) {
       T sum = 0;
       for (int k = 0; k < N; k++)
@@ -249,6 +247,7 @@ Array2D<T> matmult(const Array2D<T> &A, const Array2D<T> &B) {
 
       C[i][j] = sum;
     }
+  }
   return C;
 }
 

@@ -52,9 +52,9 @@ template <class T> std::istream &operator>>(std::istream &s, Array1D<T> &A) {
 template <class T>
 Array1D<T> operator+(const Array1D<T> &A, const Array1D<T> &B) {
   const int n = A.dim1();
-  if (B.dim1() != n)
-    return Array1D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == n);
+#endif
   Array1D<T> C(n);
   for (int i = 0; i < n; i++)
     C[i] = A[i] + B[i];
@@ -64,9 +64,9 @@ Array1D<T> operator+(const Array1D<T> &A, const Array1D<T> &B) {
 template <class T>
 Array1D<T> operator-(const Array1D<T> &A, const Array1D<T> &B) {
   const int n = A.dim1();
-  if (B.dim1() != n)
-    return Array1D<T>();
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == n);
+#endif
   Array1D<T> C(n);
   for (int i = 0; i < n; i++)
     C[i] = A[i] - B[i];
@@ -75,25 +75,33 @@ Array1D<T> operator-(const Array1D<T> &A, const Array1D<T> &B) {
 
 template <class T>
 Array1D<T> operator*(const Array1D<T> &A, const Array1D<T> &B) {
-  const int n = A.dim1();
-  if (B.dim1() != n)
-    return Array1D<T>();
-
-  Array1D<T> C(n);
-  for (int i = 0; i < n; i++)
-    C[i] = A[i] * B[i];
+  Array1D<T> C = A.copy();
+  C *= B;
   return C;
 }
 
 template <class T>
 Array1D<T> operator/(const Array1D<T> &A, const Array1D<T> &B) {
-  const int n = A.dim1();
-  if (B.dim1() != n)
-    return Array1D<T>();
+  Array1D<T> C = A.copy();
+  C /= B;
+  return C;
+}
 
-  Array1D<T> C(n);
-  for (int i = 0; i < n; i++)
-    C[i] = A[i] / B[i];
+template <class T>
+Array1D<T> operator*(const Array1D<T> &A, T scale) {
+  Array1D<T> C(A.copy());
+  for (int i=0; i<C.dim(); ++i)
+    C[i] *= scale;
+  return C;
+}
+template <class T>
+Array1D<T> operator*(T scale, const Array1D<T> &A) {
+  return A*scale;
+}
+template <class T>
+Array1D<T> operator/(const Array1D<T> &A, T scale) {
+  Array1D<T> C(A.copy());
+  C /= scale;
   return C;
 }
 
@@ -108,28 +116,31 @@ template <class T> Array1D<T> &operator+=(Array1D<T> &A, const Array1D<T> &B) {
 
 template <class T> Array1D<T> &operator-=(Array1D<T> &A, const Array1D<T> &B) {
   const int n = A.dim1();
-  if (B.dim1() == n) {
-    for (int i = 0; i < n; i++)
-      A[i] -= B[i];
-  }
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == n);
+#endif
+  for (int i = 0; i < n; i++)
+    A[i] -= B[i];
   return A;
 }
 
 template <class T> Array1D<T> &operator*=(Array1D<T> &A, const Array1D<T> &B) {
   const int n = A.dim1();
-  if (B.dim1() == n) {
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == n);
+#endif
     for (int i = 0; i < n; i++)
       A[i] *= B[i];
-  }
   return A;
 }
 
 template <class T> Array1D<T> &operator/=(Array1D<T> &A, const Array1D<T> &B) {
   const int n = A.dim1();
-  if (B.dim1() == n) {
-    for (int i = 0; i < n; i++)
-      A[i] /= B[i];
-  }
+#ifdef TNT_BOUNDS_CHECK
+  assert(B.dim1() == n);
+#endif
+  for (int i = 0; i < n; i++)
+    A[i] /= B[i];
   return A;
 }
 

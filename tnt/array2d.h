@@ -53,21 +53,22 @@ public:
   inline Array2D &ref(const Array2D &A);
   Array2D copy() const;
   Array2D &inject(const Array2D &A);
+  Array2D &inject(const Array1D<T> &A);
   inline T *operator[](int i);
   inline const T *operator[](int i) const;
+  inline T& operator()(int i, int j);
+  inline T operator()(int i, int j) const;
   inline int dim1() const;
   inline int dim2() const;
   ~Array2D();
 
-  inline T norm() const;
-  inline T norm2() const;
-  inline T mean() const;
   /* extended interface (not part of the standard) */
 
   inline int ref_count();
   inline int ref_count_data();
   inline int ref_count_dim1();
   Array2D subarray(int i0, int i1, int j0, int j1);
+  const Array2D subarray(int i0, int i1, int j0, int j1) const;
 };
 
 template <class T> Array2D<T>::Array2D() : data_(), v_(), m_(0), n_(0) {}
@@ -79,57 +80,68 @@ Array2D<T>::Array2D(const Array2D<T> &A)
 template <class T>
 Array2D<T>::Array2D(int m, int n)
     : data_(m * n), v_(m), m_(m), n_(n) {
-  if (m > 0 && n > 0) {
-    T *p = &(data_[0]);
-    for (int i = 0; i < m; i++) {
+#ifdef TNT_BOUNDS_CHECK
+    assert(m > 0 && n > 0);
+#endif
+  T *p = &(data_[0]);
+  for (int i = 0; i < m; i++) {
       v_[i] = p;
       p += n;
-    }
   }
 }
 
 template <class T>
 Array2D<T>::Array2D(int m, int n, const T &val)
     : data_(m * n), v_(m), m_(m), n_(n) {
-  if (m > 0 && n > 0) {
-    data_ = val;
-    T *p = &(data_[0]);
-    for (int i = 0; i < m; i++) {
-      v_[i] = p;
-      p += n;
-    }
+#ifdef TNT_BOUNDS_CHECK
+  assert(m > 0 && n > 0);
+#endif
+  data_ = val;
+  T *p = &(data_[0]);
+  for (int i = 0; i < m; i++) {
+    v_[i] = p;
+    p += n;
   }
 }
 
 template <class T>
 Array2D<T>::Array2D(int m, int n, T *a)
     : data_(m * n, a), v_(m), m_(m), n_(n) {
-  if (m > 0 && n > 0) {
-    T *p = &(data_[0]);
-
-    for (int i = 0; i < m; i++) {
-      v_[i] = p;
-      p += n;
-    }
+#ifdef TNT_BOUNDS_CHECK
+  assert(m > 0 && n > 0);
+#endif
+  T *p = &(data_[0]);
+  for (int i = 0; i < m; i++) {
+    v_[i] = p;
+    p += n;
   }
 }
 
 template <class T> inline T *Array2D<T>::operator[](int i) {
 #ifdef TNT_BOUNDS_CHECK
-  assert(i >= 0);
-  assert(i < m_);
+  assert(i >= 0 && i < m_);
 #endif
-
   return v_[i];
 }
 
 template <class T> inline const T *Array2D<T>::operator[](int i) const {
 #ifdef TNT_BOUNDS_CHECK
-  assert(i >= 0);
-  assert(i < m_);
+  assert(i >= 0 && i < m_);
 #endif
-
   return v_[i];
+}
+
+template <class T> inline T& Array2D<T>::operator()(int i, int j) {
+#ifdef TNT_BOUNDS_CHECK
+  assert(j >= 0 && j < n_);
+#endif
+  return v_[i][j];
+}
+template <class T> inline T Array2D<T>::operator()(int i, int j) const {
+#ifdef TNT_BOUNDS_CHECK
+  assert(j >= 0 && j < n_);
+#endif
+  return v_[i][j];
 }
 
 template <class T> Array2D<T> &Array2D<T>::operator=(const T &a) {
@@ -152,11 +164,13 @@ template <class T> Array2D<T> Array2D<T>::copy() const {
 }
 
 template <class T> Array2D<T> &Array2D<T>::inject(const Array2D &A) {
-  if (A.m_ == m_ && A.n_ == n_) {
-    for (int i = 0; i < m_; i++)
-      for (int j = 0; j < n_; j++)
-        v_[i][j] = A[i][j];
-  }
+#ifdef TNT_BOUNDS_CHECK
+  assert(A.m_ == m_ && A.n_ == n_);
+#endif
+  for (int i = 0; i < m_; i++)
+    for (int j = 0; j < n_; j++)
+      v_[i][j] = A[i][j];
+
   return *this;
 }
 
@@ -173,6 +187,19 @@ template <class T> Array2D<T> &Array2D<T>::ref(const Array2D<T> &A) {
 template <class T> Array2D<T> &Array2D<T>::operator=(const Array2D<T> &A) {
   return ref(A);
 }
+template <class T> Array2D<T> &Array2D<T>::inject(const Array1D<T> &A) {
+#ifdef TNT_BOUNDS_CHECK
+  assert((dim1() == A.dim() && dim2() == 1) ||
+         (dim2() == A.dim() && dim1() == 1));
+#endif
+    if (dim2() == 1)
+      for (int i=0; i<A.dim(); ++i)
+        v_[i][0] = A[i];
+    if (dim1() == 1)
+      for (int i=0; i<A.dim(); ++i)
+        v_[0][i] = A[i];
+  return *this;
+}
 
 template <class T> inline int Array2D<T>::dim1() const { return m_; }
 template <class T> inline int Array2D<T>::dim2() const { return n_; }
@@ -181,10 +208,6 @@ template <class T> Array2D<T>::~Array2D() {}
 
 template <class T> inline Array2D<T>::operator T **() { return &(v_[0]); }
 template <class T> inline Array2D<T>::operator const T **() { return &(v_[0]); }
-
-template <class T> inline T Array2D<T>::norm2() const { return data_.norm2(); }
-template <class T> inline T Array2D<T>::norm() const { return data_.norm(); }
-template <class T> inline T Array2D<T>::mean() const { return data_.mean(); }
 
 /* ............... extended interface ............... */
 /**
@@ -199,18 +222,38 @@ Array2D<T> Array2D<T>::subarray(int i0, int i1, int j0, int j1) {
   Array2D<T> A;
   const int m = i1 - i0 + 1;
   const int n = j1 - j0 + 1;
-
   /* if either length is zero or negative, this is an invalide
      subarray. return a null view.
   */
-  if (m < 1 || n < 1)
-    return A;
-
+#ifdef TNT_BOUNDS_CHECK
+  assert(m > 0 && n > 0);
+#endif
   A.data_ = data_;
   A.m_ = m;
   A.n_ = n;
   A.v_ = Array1D<T *>(m);
   T *p = &(data_[0]) + i0 * n_ + j0;
+  for (int i = 0; i < m; i++) {
+    A.v_[i] = p + i * n_;
+  }
+  return A;
+}
+template <class T>
+const Array2D<T> Array2D<T>::subarray(int i0, int i1, int j0, int j1) const {
+  Array2D<T> A;
+  const int m = i1 - i0 + 1;
+  const int n = j1 - j0 + 1;
+  /* if either length is zero or negative, this is an invalide
+     subarray. return a null view.
+  */
+#ifdef TNT_BOUNDS_CHECK
+  assert(m > 0 && n > 0);
+#endif
+  A.data_ = data_;
+  A.m_ = m;
+  A.n_ = n;
+  A.v_ = Array1D<T *>(m);
+  T *p = const_cast<T*>(&(data_[0])) + i0 * n_ + j0;
   for (int i = 0; i < m; i++) {
     A.v_[i] = p + i * n_;
   }
