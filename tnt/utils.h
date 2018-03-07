@@ -74,10 +74,11 @@ Array1D<T> operator-(Array1D<T> a, Array1D<T> b) {
 }
 template<typename T>
 Array1D<T> operator-(Array1D<T> a, Array2D<T> b) {
-    assert(a.dim1() == b.dim1() && b.dim2()==1);
-    Array1D<T> c(a.dim1(), T(0));
-    for (int i=0; i<a.dim1(); ++i)
-        c[i] = a[i] - b[i][0];
+    assert((a.dim() == b.dim1() && b.dim2()==1) ||
+           (a.dim() == b.dim2() && b.dim1()==1));
+    Array1D<T> c(a.dim(), T(0));
+    for (int i=0; i<a.dim(); ++i)
+        c[i] = a[i] - (b.dim2()==1 ? b[i][0] : b[0][i]);
     return c;
 }
 template<typename T>
